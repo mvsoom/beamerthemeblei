@@ -2,7 +2,7 @@
 
 A clean and minimal Beamer theme mimicking David Blei's presentation from his [Variational Inference tutorial](https://youtu.be/DaqNNLidswA?si=HxNOvryN041XVdjg) and developed for academic presentations.
 
-See `example.pdf` for a complete example of the theme in action, showcasing all features and styling options. The source code for that is in `example.tex`, but with images and other assets lacking to keep things simple.
+See [`example.pdf`](./example.pdf) for a complete example of the theme in action, showcasing all features and styling options. The source code for that is in [`example.tex`](./example.tex), but with images and other assets lacking to keep things simple.
 
 - Clean, minimal design with serif fonts (Bitstream Charter)
 - Simple navigation with page numbers in footer
@@ -14,7 +14,7 @@ See `example.pdf` for a complete example of the theme in action, showcasing all 
 
 ## Installation
 
-1. Download `beamerthemeblei.sty`
+1. Download [`beamerthemeblei.sty`](./beamerthemeblei.sty) or clone the repo
 2. Place it in your local texmf directory:
    ```
    ~/texmf/tex/latex/local/beamerthemeblei.sty
@@ -61,6 +61,8 @@ See `example.pdf` for a complete example of the theme in action, showcasing all 
 ```
 
 ### Some features
+
+All features are on display in [`example.pdf`](./example.pdf); its source code is in [`example.tex`](./example.tex).
 
 #### Grey boxes
 Highlight important content with grey boxes:
