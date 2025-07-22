@@ -1,0 +1,665 @@
+\documentclass[10pt,xcolor={dvipsnames}]{beamer}
+
+%\includeonlyframes{current}
+
+\usetheme{blei} % at ~/texmf/tex/latex/local/
+\addbibresource{library.bib}
+
+% https://tex.stackexchange.com/a/1475/193011
+% PGF doesn't use TikZ, but the tikzplotlib backend does
+%\usetikzlibrary{external}
+%\tikzexternalize[prefix=tikz/]
+
+%%%%%%%%%%
+% \notes %
+%%%%%%%%%%
+\usepackage{pgfpages}
+%\setbeameroption{hide notes} % Only slides
+%\setbeameroption{show only notes} % Only notes
+%\setbeameroption{show notes on second screen=right} % Both
+\setbeamertemplate{note page}{\pagecolor{yellow!5}\vfill\insertnote\vfill}
+
+% https://latex.org/forum/viewtopic.php?t=11357
+\usepackage{xparse}
+\NewDocumentCommand\notes{>{\SplitList{;}}m}
+{
+	\note{%
+    \begin{itemize}
+      \ProcessList{#1}{ \insertitem }
+    \end{itemize}
+    }
+}
+\newcommand\insertitem[1]{\item #1}
+
+
+%%%%%%%%%%%%
+% Packages %
+%%%%%%%%%%%%
+\usepackage{amsmath}
+\usepackage{physics}
+\usepackage{pgf}
+\DeclareUnicodeCharacter{2212}{-} % Needed for matplotlib's pgf output
+\usepackage{pythonhighlight}
+\usepackage{subfig}
+\usepackage{marvosym}
+\usepackage[normalem]{ulem}
+\usepackage{bbding}
+\usepackage{ragged2e}
+
+%\usepackage{bm} % Clashes with main font, so use \boldsymbol
+\input{../overleaf/definitions.tex}
+\newcommand{\bm}{\boldsymbol}
+
+\newcommand{\pgffigure}[2]{%
+\scalebox{#2}{\input{img/#1}}
+}
+
+\newcommand{\citelink}[2]{\href{#1}{\small\color{gray}[#2]}}
+
+\definecolor{mplblue}{HTML}{1f77b4}
+\definecolor{mplorange}{HTML}{ff7f0e}
+
+% https://tex.stackexchange.com/a/326380/193011
+\usepackage{xcolor}
+% Syntax: \colorboxed[<color model>]{<color specification>}{<math formula>}
+\newcommand*{\colorboxed}{}
+\def\colorboxed#1#{%
+  \colorboxedAux{#1}%
+}
+\newcommand*{\colorboxedAux}[3]{%
+  % #1: optional argument for color model
+  % #2: color specification
+  % #3: formula
+  \begingroup
+    \colorlet{cb@saved}{.}%
+    \color#1{#2}%
+    \boxed{%
+      \color{cb@saved}%
+      #3%
+    }%
+  \endgroup
+}
+
+%%%%%%%%%
+% Title %
+%%%%%%%%%
+
+\title{A weakly informative prior\\for resonance frequencies}
+\date{MaxEnt 2021}
+\author{Marnix Van Soom \& Bart de Boer}
+%\institute{MaxEnt 2021}
+\titlegraphic{\vspace{.75cm}\includegraphics[height=1.8cm]{logo/VUB_RGB.png}}
+
+\begin{document}
+
+\maketitle
+\notes{%
+In my own work on high precision measurement of resonances of the vocal tract I came across the problem of choosing a prior for frequencies;
+It turned out to be a subtle problem;
+And I want to share a Maximum Entropy solution we came up with with you in the hope that it will be applicable in other areas of science
+}
+
+%\section{Motivation}
+
+\begin{frame}{Resonance frequencies in the natural sciences}
+\pause
+\begin{columns}
+\begin{column}{.25\textwidth}
+\href{https://en.wikipedia.org/wiki/Nuclear_magnetic_resonance_spectroscopy}{\includegraphics[width=\textwidth]{img/nmr.jpg}}
+\cite{Wilson2014a}
+\pause
+\end{column}
+\begin{column}{.25\textwidth}
+\href{https://en.wikipedia.org/wiki/LIGO}{%
+\includegraphics[width=\textwidth]{img/ligo1.jpg}
+\includegraphics[width=\textwidth]{img/ligo2.jpg}
+}
+\cite{Littenberg2015}
+\pause
+\end{column}
+\begin{column}{.25\textwidth}
+\href{https://acoustics.org/pressroom/httpdocs/158th/pestka.htm}{ \includegraphics[width=\textwidth]{img/rus.jpg}}
+\cite{Xu2019}
+\end{column}
+\end{columns}
+
+\notes{%
+Three examples of RF in science together with recent papers giving Bayesian approach to measuring them;
+Nuclear magnetic resonance (NMR): Resonances give information about the structure of organic molecules in solution. Used in MRI scans;
+LIGO/Virgo: Gravitational wave data from ground-based detectors is dominated by instrument noise. Sharp resonances occur on top of broadband features which must be taken into account when instrument noise is modeled;
+Resonant Ultrasound Spectroscopy (RUS): Measure fundamental material properties involving elasticity. Elastic tensor of material.
+}
+\end{frame}
+
+\begin{frame}{Measurement model}
+\pause
+\greybox{$p(D,\bx) \onslide<5->{= \likelihood(\bx) \ \pi(\bx)}$}
+\pause
+\vspace{1cm}
+\begin{overprint}
+\onslide<3-4>
+\begin{columns}
+\begin{column}{.5\textwidth}
+\greybox{%
+\begin{align*}
+	\onslide<3->{D &= \text{data}} \\
+	\onslide<4->{\bx &= \{x_1\cdots x_K\}} \\
+	\onslide<4->{&= \text{$K$ resonance frequencies}}
+\end{align*}
+}
+\end{column}
+\begin{column}{.5\textwidth}
+\onslide<3->{\pgffigure{model-data.pgf}{.5}}
+\onslide<4->{\pgffigure{model-spectrum.pgf}{.5}}
+\end{column}
+\end{columns}
+
+\onslide<6->
+\begin{itemize}
+\widesep
+\item<6-> Assume $\likelihood(\bx)$ is given
+\item<7-> \alert{\textsc{choose $\pi(\bx)$ subject to limited prior information}}
+\vspace{.25cm}
+\begin{itemize}
+	\item<8-> Don't know prior estimates $\hat{\bx}$
+	\item<9-> Don't know $K$
+$$ Z(K) = \int \dd[K]{\bx} \likelihood(\bx) \pi(\bx) $$
+\end{itemize}
+\end{itemize}
+\end{overprint}
+
+\notes{%
+Model of the measurement process is defined by the joint of the data and the resonance frequencies;
+Waveform of a male saying /ae/ in "that";
+In our example the RF $\bx$ parametrize the frequency responce of the vocal tract;
+Our task is to choose $\pi(\bx)$ from limited prior information: a common situation;
+We look at three choices
+}
+
+\end{frame}
+
+\begin{frame}{First candidate: $\pi_1(\bx|\cdot)$}
+\pause
+\vspace{.5cm}
+\greybox{$\pi_1(\bx|a,b) = \prod_{k=1}^K h(x_k|a,b)$}
+\pause
+\vspace{1cm}
+\begin{overprint}
+\onslide<2-7>
+\begin{itemize}[<+->]
+	\widesep
+	\item Most common choice in literature
+	\item $K$ iid $x_k \in [a,b]$ with \emph{global} bounds
+	\item \alert{Label switching problem} \Lightning
+	\begin{itemize}
+	\item Exchange symmetry
+	\item Frustrates calculating $Z(K)$ \cite{Celeux2018}
+	\end{itemize}
+\end{itemize}
+\onslide<8>
+\hspace{-.35cm}
+\pgffigure{label-switching-talk-1.pgf}{.58}
+\onslide<9>
+\hspace{-.35cm}
+\pgffigure{label-switching-talk-2.pgf}{.58}
+\onslide<10>
+\hspace{-.35cm}
+\pgffigure{label-switching-talk-3.pgf}{.58}
+\end{overprint}
+
+\notes{%
+Global bounds are typically lower bound and the Nyquist frequency;
+If $\likelihood$ has exchange symmetry, so will posterior;
+This makes reliable calculation of $Z(K)$ hard: problem well-known from mixture modelling;
+Example picture shows posterior degeneration for $K=3$ with Jeffreys priors for $h(x|a,b)$
+}
+
+\end{frame}
+
+\begin{frame}{Second candidate: $\pi_2(\bx|\cdot)$}
+\pause
+\greybox{$\pi_2(\bx|\ba,\bb) = \prod_{k=1}^K h(x_k|a_k,b_k)$}
+\pause
+\vspace{1cm}
+\begin{itemize}[<+->]
+	\widesep
+\item $K$ independent $x_k \in [a_k,b_k]$ with \emph{local} bounds $(\ba,\bb)$
+	\item \alert{Multiplet problem} \Lightning
+\begin{itemize}[<+->]
+\item Need overlap for close frequencies
+\item But this brings back the label switching problem
+\end{itemize}
+\end{itemize}
+
+\notes{%
+Break the exchange symmetry with local, specialized bounds;
+This requires extra knowledge or some heuristic;
+But this does not allow detection of multiplet of arbitrary order;
+Nonetheless, is useful if knowledge is available and high-order multiplets are not expected
+}
+\end{frame}
+
+\begin{frame}{Third candidate: $\pi_3(\bx|\cdot)$}
+\vspace{.2cm}
+
+\onslide<2->
+\greybox{$\pi_3(\bx|\blambda) = \prod_{k=1}^K \Pareto(x_k | x_{k-1},\lambda_k) \qquad \onslide<5->{\bx \in \orderedregion_K(x_0)}$}
+
+\vspace{.5cm}
+
+\begin{overprint}
+
+\onslide<3->
+\begin{itemize}
+\widesep
+\item<3-> \alert{Maximum entropy distribution}
+
+% https://tex.stackexchange.com/a/306233/193011
+\item<4->
+\begin{minipage}[t]{.6\textwidth}
+Chain of coupled \emph{Pareto distributions}
+$$ \Pareto(x|x_*,\lambda) = \frac{\lambda}{x} \qty(\frac{x_*}{x})^\lambda  \qquad (x_* \leq x) $$
+\end{minipage}
+\begin{minipage}[t]{.3\textwidth}
+\vspace{-.3cm}
+\begin{figure}
+	\pgffigure{pareto-pdf.pgf}{.6}
+\end{figure}
+\end{minipage}
+\vspace{-.5cm}
+\item<5->
+\begin{minipage}[t]{.6\textwidth}
+Supported by the \emph{ordered region}
+$$\orderedregion_K(x_0) = \{\bx | x_0 \leq x_1 \leq x_2 \leq \cdots \leq x_K\}$$
+\end{minipage}
+\begin{minipage}[t]{.3\textwidth}
+\vspace{-.3cm}
+\begin{figure}
+\pgffigure{ordered-region-2d.pgf}{.6}
+\end{figure}
+\end{minipage}
+
+\end{itemize}
+
+\onslide<6->
+\hspace{-.35cm}
+\pgffigure{joint-talk-region.pgf}{.58}
+\begin{center}
+Support $\orderedregion_3(x_0) = \{\bx | x_0 \leq x_1 \leq x_2 \leq x_3\}$
+\end{center}
+
+\onslide<7->
+\hspace{-.35cm}
+\pgffigure{joint-talk.pgf}{.58}
+\begin{center}
+Pairwise prior distribution $\textcolor{mplorange}{\pi_3(\bx|\blambda)}$
+\end{center}
+
+\onslide<8->
+\hspace{-.35cm}
+\pgffigure{label-switching-talk-4.pgf}{.58}
+\begin{center}
+Pairwise posterior distribution $\textcolor{mplorange}{P_3(\bx|\blambda)} \propto \likelihood(\bx) \textcolor{mplorange}{\pi_3(\bx|\blambda)}$
+\end{center}
+
+\onslide<9->
+\hspace{-.35cm}
+\pgffigure{label-switching-talk-3.pgf}{.58}
+\begin{center}
+Pairwise posterior distribution $\textcolor{mplblue}{P_1(\bx|a,b)} \propto \likelihood(\bx) \textcolor{mplblue}{\pi_1(\bx|a,b)}$
+\end{center}
+
+\onslide<10->
+\hspace{-.35cm}
+\pgffigure{label-switching-talk-5.pgf}{.58}
+\begin{center}
+$\textcolor{mplblue}{P_1(\bx|a,b)}$ vs. $\textcolor{mplorange}{P_3(\bx|\blambda)}$
+\end{center}
+
+\onslide<11->{%
+\begin{columns}
+\begin{column}{.5\textwidth}
+\centering
+\sout{Label switching problem} \textcolor{mplorange}{\CheckmarkBold}
+\end{column}
+\begin{column}{.5\textwidth}
+\centering
+\sout{Multiplet problem} \textcolor{mplorange}{\CheckmarkBold}
+\end{column}
+\end{columns}
+}
+
+\end{overprint}
+
+\notes{%
+Pareto distribution a.k.a. power low;
+Maximum entropy distribution: in exponential family;
+$\blambda$ are Lagrange multipliers, but we'll express them in terms of expected values of $\bx$;
+Compression of prior to posterior in a well-posed problem;
+Compare to performance of $\pi_1$;
+Label switching problem of $\pi_1$, multiplet problem of $\pi_2$
+}
+
+\end{frame}
+
+\begin{frame}{Deriving $\pi_3(\bx|\cdot)$}
+\pause
+
+\begin{overprint}
+\onslide<+->
+
+\greybox{%
+Ansatz: Jeffreys prior $m(x_k) \propto 1/x_k$
+}
+
+\vspace{.8cm}
+
+\begin{itemize}[<+->]
+
+
+\item
+\begin{minipage}[t]{.6\textwidth}
+$
+    m(\bx) = \left\{\begin{array}{ll}
+        \prod_{k=1}^K \frac{1}{x_k} & \bx \in \orderedregion_K(x_0)\\
+        0 & \text{else}
+        \end{array}
+$
+\end{minipage}
+\begin{minipage}[t]{.3\textwidth}
+\vspace{-1cm}
+\centering $\orderedregion_3(x_0)$
+\begin{figure}
+	\includegraphics[height=2cm]{img/oc-x.pdf}
+\end{figure}
+\end{minipage}
+
+\vspace{-.5cm}
+\item
+$ \bx \rightarrow \bu\colon \quad \left\{\begin{aligned}
+        u_1 &= \log(x_1/x_0) \\
+        u_2 &= \log(x_2/x_1) \\
+        &\cdots \\
+        u_K &= \log(x_K/x_{K-1})
+        \end{aligned} $
+
+\vspace{1cm}
+\item
+\begin{minipage}[t]{.6\textwidth}
+$
+    m(\bu) = m(\bx(\bu)) \abs{\dv{\bx}{\bu}} = \left\{\begin{array}{ll}
+        1 & \bu \geq 0 \\
+        0 & \text{else}
+        \end{array}
+$
+\end{minipage}
+\begin{minipage}[t]{.3\textwidth}
+\vspace{-1.5cm}
+\centering $\orderedregion_3(x_0)$ in $\bu$ space
+\begin{figure}
+	\includegraphics[height=2cm]{img/oc-u.pdf}
+\end{figure}
+\end{minipage}
+
+\end{itemize}
+
+\onslide<+->
+
+\greybox{%
+Normalize $
+    m(\bu) = \left\{\begin{array}{ll}
+        1 & \bu \geq 0 \\
+        0 & \text{else}
+        \end{array}
+$ by constraining first moments $\expval{\bu} := \bbaru$
+}
+
+\begin{itemize}[<+->]
+\widesep
+
+\item
+Minimize
+$$D_\text{KL}(\pi_3 | m) = \int \dd[K]{\bu} \pi_3(\bu) \log{\frac{\pi_3(\bu)}{m(\bu)}}$$
+subject to
+$$
+\expval{\bu} \equiv \int \dd[K]{\bu} \bu \pi_3(\bu) := \bbaru
+$$
+
+\item
+Solution:
+$$ \pi_3(\bu|\blambda) = \prod_{k=1}^K \Exp(u_k|\lambda_k) \qquad (\bu \geq 0) $$
+where the rates $\lambda_k = 1/\baru{k}$
+
+\item Equivalent to Jaynes' \emph{principle of maximum entropy} with $m(\bu)$ serving as the invariant measure \cite{Jaynes1968}
+\end{itemize}
+
+\onslide<+->
+
+\greybox{%
+Transform $\pi_3(\bu|\blambda)$ to $\bx$ space and re-express $\blambda$
+}
+
+\vspace{.5cm}
+
+\begin{itemize}[<+->]
+\widesep
+
+\item
+$ \bu \rightarrow \bx\colon \quad \left\{\begin{aligned}
+        x_1 &= x_0 \exp{u_1} \\
+        x_2 &= x_0 \exp{u_1 + u_2} \\
+        &\cdots \\
+        x_K &= x_0 \exp{u_1 + u_2 + \cdots + u_K}
+        \end{aligned} $
+
+\item
+$
+\pi_3(\bx|\blambda) = \pi_3(\bu(\bx)|\blambda) \abs{\dv{\bu}{\bx}}
+= \prod_{k=1}^K \Pareto(x_k | x_{k-1},\lambda_k)
+$
+
+\item How to set \alert{hyperparameters} $\lambda_k^{-1} = \baru{k} = \overline{\log{x_k/x_{k-1}}}$?
+\begin{itemize}
+\widesep
+\item Use identity:
+$
+	\expval{x_k} \equiv \int \dd[K]{\bx} x_k \pi_3(\bx|\blambda) = \frac{\lambda_k}{\lambda_k-1} \expval{x_{k-1}}
+$
+\item Thus:
+$$ \colorboxed{gray}{\lambda_k = \frac{\barx{k}}{\barx{k}-\barx{k-1}}} $$
+\end{itemize}
+
+\end{itemize}
+
+\end{overprint}
+
+\notes{%
+Thus we can express $\blambda$ in something more easy to set: the expected values of the frequencies
+}
+
+\end{frame}
+
+\begin{frame}{Further properties of $\pi_3(\bx|\cdot)$}
+\pause
+
+\begin{itemize}
+\widesep
+\item<+-> \alert{Convenient parametrization}:~ $\colorboxed{gray}{\pi_3(\bx|\bbarxnull) \qq{where} \bbarxnull \equiv (x_0,\barx{1},\barx{2},\cdots,\barx{K})}$
+
+\item<+-> \alert{Inference insensitive} to values of the hyperparameters $\bbarxnull$
+\begin{itemize}
+\item Maximum entropy: weak inductive bias
+\item Heavy tails
+\item Terrible sample statistics $\frac{1}{n}\sum_i x_k^{(i)} \rightarrow \barx{k}$
+\end{itemize}
+
+\item<+-> \alert{Sampling} trivial: $\bu \rightarrow \bx$
+
+\item<+-> \alert{``Consistent''}
+\begin{itemize}
+\item Marginalizing out higher frequencies $\equiv$ having set up $\pi_3(\bx|\bbarxnull)$ without knowledge of those frequencies
+\end{itemize}
+
+\item<+-> \alert{Scale invariant}: $\pi_3(c\bx|\bbarxnull) = f(c) \pi_3(\bx|\bbarxnull)$ \cite{Newman2005}
+
+\end{itemize}
+
+
+\end{frame}
+
+%\section{A weakly informative prior}
+
+%\section{Measuring resonance frequencies of the vocal tract}
+
+% Show that diff in hypotheses is of O(K!) thus robust evaluation needed
+
+%\section{Conclusion}
+
+\begin{frame}[label=current]{Application}
+
+\greybox{%
+Compare the $\pi_i(\bx|\cdot)$ candidates on a simple inference task.
+}
+\vspace{.5cm}
+\onslide<+->
+
+\begin{overprint}
+
+\onslide<+->
+
+\begin{columns}
+\begin{column}{.5\textwidth}
+\begin{itemize}
+\widesep
+\item Measure resonance frequencies of the human vocal tract
+\item Five representative vowel sounds taken from the CMU ARCTIC database \cite{Kominek2004}
+\item $D \in \{\shore, \that, \you, \little, \until\}$
+\item Compare $Z_i(K)$ and $H_i(K)$ for each $D$ and $i \in \{1,2,3\}$
+\end{itemize}
+\end{column}
+\begin{column}{.5\textwidth}
+\centering ``$\that$'' \\
+\vspace{.1cm}
+\pgffigure{model-data.pgf}{.5}
+\pgffigure{model-spectrum.pgf}{.5}
+\end{column}
+\end{columns}
+
+\onslide<+->
+
+\begin{figure}[t]
+\pgffigure{priors.pgf}{.62}
+\caption{%
+\footnotesize
+\justifying
+\textcolor{gray}{%
+Comparison of $\pi_1$, $\pi_2$ and $\pi_3$ in terms of the marginal priors $\pi_i(x_k|\cdot)$ for the case $K :=3 $.
+%The actual values of the hyperparameters used for this plot are given in Table~\ref{hyperparameters}.
+The marginal $\pi_i(x_k|\cdot)$ is obtained by integrating out the two other frequencies; for example, $\pi_i(x_1|\cdot) = \iint \dd{x_2} \dd{x_3} \pi_i(\bx|\cdot)$.
+The pdfs are shown on a common log scale and are scaled by the appropriate Jacobian determinant $\abs{\dv*{x_k}{\log{x_k}}} = x_k$.
+\label{priors}
+}
+}
+\end{figure}
+
+\begin{center}
+\alert{\textcolor{red}{$\pi_1(\bx|\cdot)$ is excluded for $K \geq 4$}}
+\end{center}
+
+\onslide<+->
+\begin{figure}[t]      
+\centering
+\subfloat[]{\pgffigure{bars.pgf}{.62}}
+\qquad
+\subfloat[]{\pgffigure{arrow.pgf}{.62}}
+\caption{%
+\footnotesize
+\justifying
+\textcolor{gray}{%
+{\bf (a)}
+Model selection in Experiment I (top row) and Experiment II (bottom row).
+{\bf (b)}
+In Experiment I, $\pi_2$ and $\pi_3$ are compared in terms of evidence [$\log{Z_i(K)}$] and uninformativeness [$H_i(K)$] for each $(D,K)$.
+The arrows point from $\pi_2$ to $\pi_3$ and are color-coded by the value of $K$.
+For small values of $K$, the arrow lengths are too small to be visible on this scale.
+}
+}
+\end{figure}
+
+\onslide<+->
+\begin{figure}[t]
+\pgffigure{spectrum.pgf}{.62}
+\caption{%
+\footnotesize
+\justifying
+\textcolor{gray}{%
+The VTR problem for the case $(D := \until, K := 10)$.
+Left panel:
+The data $D$, i.e., the quasi-periodic steady-state part consisting of 3 highly correlated pitch periods.
+Right panel:
+Inferred VTR frequency estimates $\{\hat{x}_k\}_{k=1}^K$ for $K := 10$ at 3 sigma.
+They describe the power spectral density of the vocal tract transfer function $|T(x)|^2$, represented here by 25 posterior samples and compared to the Fast Fourier Transform (FFT) of $D$.
+All $\hat{x}_k$ are well resolved and most have error bars too small to be seen on this scale.
+%$\log{Z} = \numb{220.71(28)}$.
+%$H = \numb{39}~\text{nats}$.
+%SNR (dB) = 18.29(23).
+\label{spectrum}
+}
+}
+\end{figure}
+
+\onslide<+->
+
+\begin{center}
+\alert{Conclusions:}\\
+\end{center}
+
+\begin{enumerate}
+\widesep
+\item $\pi_1$ can't be used for $K \geq 4$
+\item $\pi_2$ dominated by $\pi_3$ in terms of \alert{evidence} $Z_i(K)$
+\item $\pi_2$ about as uninformative as $\pi_3$ in terms of the \alert{information} $H_i(K)$
+\item $\pi_3$ can push $K$ further
+\end{enumerate}
+
+\end{overprint}
+\end{frame}
+
+\begin{frame}{Summary}
+\pause
+%quantify the predictive quality of our assumption = evidence
+%WHY BOTHER? WE HAVE SO MUCH DATA.
+
+\begin{itemize}
+\widesep
+
+\item<2-> The prior facilitates model selection problems in which the number $K$ of resonance frequencies is unknown by enabling the use of more robust evidence-based methods, even in the presence of multiplets of arbitrary order.
+\begin{enumerate}
+\item Solves label switching problem
+\item Solves multiplet problem
+\end{enumerate}
+
+\item<3-> The prior
+\begin{enumerate}
+\item is in the exponential family,
+\item encodes a weakly inductive bias,
+\item provides a reasonable density everywhere,
+\item is easily parametrizable,
+\item is easy to sample from.
+\end{enumerate}
+That's enough! Meant to be overwhelmed.
+
+\item<4-> The prior is valid for any collection of scale variables which are intrinsically ordered.
+\begin{itemize}
+\item Does it apply to modeling spectra directly?
+\end{itemize}
+
+\end{itemize}
+
+\end{frame}
+
+\insertreferences
+
+%\appendix
+
+\end{document}
