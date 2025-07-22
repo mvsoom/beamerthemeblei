@@ -1,0 +1,158 @@
+% \usetheme{blei}
+%
+% A custom Beamer theme based on David Blei's tutorial on variational inference.
+% See https://tex.stackexchange.com/a/214081/193011 for how the Beamer
+% packaging works.
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+
+\usetheme{default}
+\usecolortheme[named=black]{structure}
+\useinnertheme{rectangles}
+
+%%%%%%%%%
+% Outer %
+%%%%%%%%%
+
+\setbeamertemplate{headline}{}
+\setbeamertemplate{navigation symbols}{}
+
+\setbeamertemplate{footline}{
+  \hfill%
+  \usebeamercolor[fg]{page number in head/foot}%
+  \usebeamerfont{page number in head/foot}%
+  \setbeamertemplate{page number in head/foot}[framenumber]%
+  \usebeamertemplate*{page number in head/foot}\kern1em\vskip3pt%
+}
+
+\setbeamersize{text margin left=1.6em,text margin right=1.6em}
+
+% https://tex.stackexchange.com/a/109984/193011
+\setbeamertemplate{frametitle}{
+    \vspace{1.1em}
+    \insertframetitle
+    \vspace{.2em}
+}
+
+\setbeamertemplate{sections/subsections in toc}[default]
+
+% https://tex.stackexchange.com/a/136995/193011
+%\AtBeginSection{%
+%\begin{frame}{Outline}
+%\tableofcontents[currentsection,hideallsubsections]
+%\overlay<2>{\usebeamerfont{section title}\insertsection\par}
+%\end{frame}
+%}
+
+% https://tex.stackexchange.com/a/354412/193011
+\newcommand{\mypause}[1][+]{\onslide<#1>}
+\AtBeginSection{%
+\begin{frame}<\value{section}>{Outline}
+        \setbeamercovered{%
+           still covered={\opaqueness<1->{100}},
+           again covered={\opaqueness<1->{20}}
+        }
+        \let\pause\mypause
+        \tableofcontents[pausesections]
+	\overlay<0>{\usebeamerfont{section title}\insertsection\par} % hide
+\end{frame}
+\begin{frame}<\value{section}>[noframenumbering]{Outline}
+        \setbeamercovered{%
+           still covered={\opaqueness<1->{100}},
+           again covered={\opaqueness<1->{20}}
+        }
+        \let\pause\mypause
+        \tableofcontents[pausesections]
+	\overlay<\value{section}>{\usebeamerfont{section title}\insertsection\par} % show
+\end{frame}
+}
+
+\newcommand{\greybox}[2][\textwidth]{%
+ \setbeamercolor{coloredboxstuff}{bg=gray!9}
+ \begin{beamercolorbox}[center,sep=1em,wd=#1]{coloredboxstuff}
+ #2
+ \end{beamercolorbox}
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%
+% \overlay{Example text} %
+%%%%%%%%%%%%%%%%%%%%%%%%%%
+\usepackage{tikz}
+
+% https://tex.stackexchange.com/a/208635/193011
+\newcommand<>{\overlay}[2][]{%
+  \tikz[overlay, remember picture]{%
+    \filldraw#3[white,opacity=0.8](current page.north west) rectangle (current page.south east);
+    \node#3[anchor=center] at (current page.center) {\greybox[\paperwidth]{#2}};
+  }%
+}
+
+%%%%%%%%
+% Font %
+%%%%%%%%
+
+\usepackage[bitstream-charter]{mathdesign}
+\usepackage[T1]{fontenc}
+\usefonttheme{serif} % default family is serif
+
+\setbeamerfont{title}{series=\bfseries,parent=structure}
+\setbeamerfont{subtitle}{series=\mdseries} % Normal-weight text
+\setbeamerfont{frametitle}{size=\large,series=\bfseries,parent=structure}
+
+\setbeamerfont{alerted text}{series=\bfseries,parent=structure}
+\setbeamercolor{alerted text}{fg=black} % The default is nice too
+
+\setbeamerfont{itemize/enumerate subbody}{size=\normalsize}
+\setbeamerfont{itemize/enumerate subsubbody}{size=\normalsize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%
+% itemize and enumerate %
+%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% https://tex.stackexchange.com/a/432377/193011
+\setbeamertemplate{itemize item}{\scriptsize$\textcolor{lightgray}{\blacksquare}$}
+\setbeamertemplate{itemize subitem}{\scriptsize$-$}
+\setbeamertemplate{itemize subsubitem}{}
+
+\setbeamertemplate{enumerate item}{\footnotesize\insertenumlabel.}
+
+\newcommand{\widesep}{\addtolength{\itemsep}{10pt}}
+
+%%%%%%%%%%%%%
+% Citations %
+%%%%%%%%%%%%%
+
+\setbeamertemplate{bibliography item}{}
+
+% https://tex.stackexchange.com/a/291302/193011
+\usepackage[style=authoryear,backend=biber,maxbibnames=6,maxcitenames=2,mincitenames=1,uniquelist=false,doi=false,isbn=false,url=false,eprint=false,date=year]{biblatex}
+
+% https://tex.stackexchange.com/a/121671/193011
+\AtEveryBibitem{%
+  \clearlist{language}%
+}
+
+% https://tex.stackexchange.com/a/57341/193011
+%\renewcommand*{\bibfont}{\scriptsize}
+
+% https://tex.stackexchange.com/a/352117/193011
+\DefineBibliographyStrings{english}{%
+  andothers = {\!+}
+}
+
+% https://tex.stackexchange.com/a/351387/193011
+\newcommand\mkbibcolor[2]{{\small\textcolor{#1}{\hypersetup{citecolor=#1}[#2]}}}
+\DeclareCiteCommand{\cite}[\mkbibcolor{gray}]
+  {\usebibmacro{prenote}}%
+  {\usebibmacro{citeindex}%
+   \usebibmacro{cite}}
+  {\multicitedelim}
+  {\usebibmacro{postnote}}
+
+\newcommand{\insertreferences}{%
+\begin{frame}[plain,t,noframenumbering,allowframebreaks]{References}
+% https://tex.stackexchange.com/a/351072/193011
+\printbibliography[heading=none]
+\end{frame}
+}
