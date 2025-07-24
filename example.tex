@@ -47,7 +47,50 @@
 \usepackage{ragged2e}
 
 %\usepackage{bm} % Clashes with main font, so use \boldsymbol
-\input{../overleaf/definitions.tex}
+
+%%%%%%%%%%%%
+% Commands %
+%%%%%%%%%%%%
+\newcommand{\xmax}{x_{\text{max}}}
+\newcommand{\Kmax}{K_{\text{max}}}
+
+\newcommand{\bx}{{\bm x}}
+\newcommand{\bxnull}{{\bm x_0}}
+\newcommand{\blambda}{{\bm \lambda}}
+\newcommand{\ba}{{\bm a}}
+\newcommand{\bb}{{\bm b}}
+\newcommand{\btheta}{{\bm \theta}}
+\newcommand{\balpha}{{\bm \alpha}}
+\newcommand{\bu}{{\bm u}}
+\newcommand{\bd}{{\bm d}}
+\newcommand{\bA}{{\bm A}}
+\newcommand{\bbeta}{{\bm \beta}}
+
+\newcommand{\barx}[1]{\overline{x_{#1}}}
+\newcommand{\baru}[1]{\overline{u_{#1}}}
+\newcommand{\bbarx}{\overline{\bm x}}
+\newcommand{\bbarxnull}{\overline{\bm{x_0}}}
+\newcommand{\bbaru}{\overline{{\bm u}}}
+
+\DeclareMathOperator{\Pareto}{\mathsf{Pareto}}
+\DeclareMathOperator{\ParetoChain}{\mathsf{ParetoChain}}
+\DeclareMathOperator{\Jeffreys}{\mathsf{Jeffreys}}
+\DeclareMathOperator{\Exp}{\mathsf{Exp}}
+
+\newcommand{\priorinformation}{\mathcal{I}}
+\newcommand{\likelihood}{\mathcal{L}}
+\newcommand{\model}{\mathcal{M}}
+
+\newcommand{\orderedregion}{\mathcal{R}}
+
+\newcommand{\data}[1]{{\mathsf{#1}}}
+\newcommand{\little}{\data{little}}
+\newcommand{\until}{\data{until}}
+\newcommand{\shore}{\data{shore}}
+\newcommand{\that}{\data{that}}
+\newcommand{\you}{\data{you}}
+
+\newcommand{\numb}[1]{\mathsf{#1}}
 \newcommand{\bm}{\boldsymbol}
 
 \newcommand{\pgffigure}[2]{%
@@ -93,11 +136,6 @@
 \begin{document}
 
 \maketitle
-\notes{%
-In my own work on high precision measurement of resonances of the vocal tract I came across the problem of choosing a prior for frequencies;
-It turned out to be a subtle problem;
-And I want to share a Maximum Entropy solution we came up with with you in the hope that it will be applicable in other areas of science
-}
 
 %\section{Motivation}
 
@@ -123,12 +161,6 @@ And I want to share a Maximum Entropy solution we came up with with you in the h
 \end{column}
 \end{columns}
 
-\notes{%
-Three examples of RF in science together with recent papers giving Bayesian approach to measuring them;
-Nuclear magnetic resonance (NMR): Resonances give information about the structure of organic molecules in solution. Used in MRI scans;
-LIGO/Virgo: Gravitational wave data from ground-based detectors is dominated by instrument noise. Sharp resonances occur on top of broadband features which must be taken into account when instrument noise is modeled;
-Resonant Ultrasound Spectroscopy (RUS): Measure fundamental material properties involving elasticity. Elastic tensor of material.
-}
 \end{frame}
 
 \begin{frame}{Measurement model}
@@ -168,14 +200,6 @@ $$ Z(K) = \int \dd[K]{\bx} \likelihood(\bx) \pi(\bx) $$
 \end{itemize}
 \end{overprint}
 
-\notes{%
-Model of the measurement process is defined by the joint of the data and the resonance frequencies;
-Waveform of a male saying /ae/ in "that";
-In our example the RF $\bx$ parametrize the frequency responce of the vocal tract;
-Our task is to choose $\pi(\bx)$ from limited prior information: a common situation;
-We look at three choices
-}
-
 \end{frame}
 
 \begin{frame}{First candidate: $\pi_1(\bx|\cdot)$}
@@ -207,13 +231,6 @@ We look at three choices
 \pgffigure{label-switching-talk-3.pgf}{.58}
 \end{overprint}
 
-\notes{%
-Global bounds are typically lower bound and the Nyquist frequency;
-If $\likelihood$ has exchange symmetry, so will posterior;
-This makes reliable calculation of $Z(K)$ hard: problem well-known from mixture modelling;
-Example picture shows posterior degeneration for $K=3$ with Jeffreys priors for $h(x|a,b)$
-}
-
 \end{frame}
 
 \begin{frame}{Second candidate: $\pi_2(\bx|\cdot)$}
@@ -231,12 +248,6 @@ Example picture shows posterior degeneration for $K=3$ with Jeffreys priors for 
 \end{itemize}
 \end{itemize}
 
-\notes{%
-Break the exchange symmetry with local, specialized bounds;
-This requires extra knowledge or some heuristic;
-But this does not allow detection of multiplet of arbitrary order;
-Nonetheless, is useful if knowledge is available and high-order multiplets are not expected
-}
 \end{frame}
 
 \begin{frame}{Third candidate: $\pi_3(\bx|\cdot)$}
@@ -330,15 +341,6 @@ $\textcolor{mplblue}{P_1(\bx|a,b)}$ vs. $\textcolor{mplorange}{P_3(\bx|\blambda)
 }
 
 \end{overprint}
-
-\notes{%
-Pareto distribution a.k.a. power low;
-Maximum entropy distribution: in exponential family;
-$\blambda$ are Lagrange multipliers, but we'll express them in terms of expected values of $\bx$;
-Compression of prior to posterior in a well-posed problem;
-Compare to performance of $\pi_1$;
-Label switching problem of $\pi_1$, multiplet problem of $\pi_2$
-}
 
 \end{frame}
 
@@ -472,10 +474,6 @@ $$ \colorboxed{gray}{\lambda_k = \frac{\barx{k}}{\barx{k}-\barx{k-1}}} $$
 \end{itemize}
 
 \end{overprint}
-
-\notes{%
-Thus we can express $\blambda$ in something more easy to set: the expected values of the frequencies
-}
 
 \end{frame}
 

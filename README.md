@@ -2,7 +2,7 @@
 
 A clean and minimal Beamer theme mimicking David Blei's presentation from his [Variational Inference tutorial](https://youtu.be/DaqNNLidswA?si=HxNOvryN041XVdjg) and developed for academic presentations.
 
-See [`example.pdf`](./example.pdf) for a complete example of the theme in action, showcasing all features and styling options. The source code for that is in [`example.tex`](./example.tex), but with images and other assets lacking to keep things simple.
+See [`example.pdf`](./example.pdf) for a complete example of the theme in action, showcasing all features and styling options. The source code for that is in [`example.tex`](./example.tex), but with **images and other assets lacking** to keep things simple!
 
 - Clean, minimal design with serif fonts (Bitstream Charter)
 - Simple navigation with page numbers in footer
